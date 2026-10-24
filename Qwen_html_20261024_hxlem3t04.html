@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#093d2f">
+<title>مصاريفي · لوحة المالك</title>
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='15' fill='%23093d2f'/><text x='32' y='44' font-size='28' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>M</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Baloo+Bhaijaan+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f0d; --surface:#131a17; --surface-2:#1a2420; --line:#253029;
+  --ink:#e9eee9; --ink-2:#9aa79f; --ink-3:#6a756f;
+  --brand:#0d5c45; --brand-deep:#093d2f; --brand-soft:rgba(13,92,69,.18);
+  --gold:#dd9f33; --gold-soft:rgba(221,159,51,.15);
+  --danger:#d24d4d; --danger-soft:rgba(210,77,77,.15);
+  --ok:#3db67f; --ok-soft:rgba(61,182,127,.15);
+  --blue:#5a9cf5; --blue-soft:rgba(90,156,245,.15);
+  --purple:#a878f5; --purple-soft:rgba(168,120,245,.15);
+  --radius:12px;
+  --shadow:0 2px 10px rgba(0,0,0,.3);
+  --font-body:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+  --font-display:'Baloo Bhaijaan 2',var(--font-body);
+  --sat:env(safe-area-inset-top); --sab:env(safe-area-inset-bottom);
+}
+body.light{
+  --bg:#f1f5f2; --surface:#ffffff; --surface-2:#f8faf8; --line:#e1e8e3;
+  --ink:#1b2723; --ink-2:#63736c; --ink-3:#94a39b;
+  --shadow:0 2px 10px rgba(16,40,30,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);font-size:14px;line-height:1.6;color:var(--ink);background:var(--bg);
+  padding-top:var(--sat);padding-bottom:var(--sab);
+}
+::selection{background:var(--brand-soft)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;min-height:44px;min-width:44px}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);min-height:44px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+@media(min-width:700px){input,select,textarea{font-size:15px}}
+.num{font-family:var(--font-display);font-variant-numeric:tabular-nums}
+.ys-badge{display:inline-block;background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;
+  font-family:var(--font-display);font-weight:800;font-size:.7em;letter-spacing:1.5px;
+  padding:2px 9px 3px;border-radius:8px;vertical-align:middle}
+a{color:var(--brand);text-decoration:none}
+
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:900px){.app{grid-template-columns:1fr}}
+
+.sidebar{background:var(--surface);border-inline-end:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:var(--sat);height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 14px;border-bottom:1px dashed var(--line);margin-bottom:10px}
+.brand-logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(140deg,var(--brand),var(--brand-deep));display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:800;font-size:1.1rem;flex:none}
+.brand h1{font-family:var(--font-display);font-size:1.1rem;font-weight:800}
+.brand small{display:block;font-size:.68rem;color:var(--ink-3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--ink-2);font-weight:600;font-size:.87rem;transition:.15s;text-align:start;width:100%}
+.nav-item:hover{background:var(--brand-soft);color:var(--brand)}
+.nav-item.active{background:var(--brand);color:#fff}
+.nav-item .count{margin-inline-start:auto;background:var(--danger);color:#fff;font-size:.66rem;padding:1px 7px;border-radius:99px;font-weight:700}
+.side-foot{margin-top:auto;padding:10px 4px;font-size:.72rem;color:var(--ink-3);display:flex;flex-direction:column;gap:6px}
+.user-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border-radius:10px;font-size:.8rem}
+
+.main{min-width:0;padding:20px clamp(12px,2vw,28px) 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.topbar h2{font-family:var(--font-display);font-size:clamp(1.3rem,2.4vw,1.7rem);font-weight:800}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:9px;font-weight:700;font-size:.85rem;transition:.15s;border:1px solid transparent;min-height:40px}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-deep)}
+.btn-ghost{background:var(--surface-2);border-color:var(--line);color:var(--ink-2)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-sm{padding:6px 11px;font-size:.78rem;min-height:34px}
+.btn-icon{width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:8px;color:var(--ink-3);transition:.15s;background:var(--surface-2)}
+.btn-icon:hover{background:var(--brand-soft);color:var(--brand)}
+.btn-block{width:100%}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-h h3{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;inset-inline-start:0;width:4px;height:100%;background:var(--brand)}
+.kpi.ok::before{background:var(--ok)}.kpi.danger::before{background:var(--danger)}.kpi.warn::before{background:var(--gold)}.kpi.info::before{background:var(--blue)}
+.kpi .l{font-size:.74rem;color:var(--ink-3);font-weight:600;margin-bottom:4px}
+.kpi .v{font-family:var(--font-display);font-size:1.55rem;font-weight:800;line-height:1}
+.kpi .s{font-size:.72rem;color:var(--ink-3);margin-top:4px}
+
+.grid-2{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.filter-bar input[type="search"]{max-width:260px;min-width:180px;flex:1}
+.filter-bar select{max-width:180px}
+
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table.data{width:100%;border-collapse:collapse;min-width:600px}
+table.data th{font-size:.72rem;color:var(--ink-3);font-weight:700;text-align:start;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+table.data td{padding:10px 14px;border-bottom:1px solid var(--line);font-size:.85rem;vertical-align:middle}
+table.data tr:hover{background:var(--surface-2)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:.7rem;font-weight:700;background:var(--surface-2);border:1px solid var(--line)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.tag.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.tag.warn{background:var(--gold-soft);color:var(--gold);border-color:transparent}
+.tag.info{background:var(--blue-soft);color:var(--blue);border-color:transparent}
+
+/* مخطط SVG */
+.chart-svg{width:100%;height:200px}
+.chart-svg .grid-line{stroke:var(--line);stroke-width:1;stroke-dasharray:2,3}
+.chart-svg .axis-label{fill:var(--ink-3);font-size:10px;font-family:var(--font-body)}
+.chart-svg .plot-line{fill:none;stroke:var(--brand);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart-svg .plot-area{fill:url(#plotGrad);opacity:.4}
+.chart-svg .plot-dot{fill:var(--brand);stroke:var(--surface);stroke-width:2}
+
+/* المودال */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .2s}
+.modal.open{opacity:1;pointer-events:auto}
+.modal-card{width:min(720px,100%);background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:92vh;overflow:auto}
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-h h3{font-family:var(--font-display);font-size:1.1rem;font-weight:800}
+.modal-b{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line)}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.78rem;font-weight:700;color:var(--ink-2)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:540px){.form-grid{grid-template-columns:1fr}}
+
+.toggle{position:relative;display:inline-block;width:44px;height:24px;flex:none}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:.2s;cursor:pointer}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;inset-inline-start:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:var(--brand)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
+body[dir="rtl"] .toggle input:checked+.toggle-slider::before{transform:translateX(-20px)}
+
+.toast-container{position:fixed;top:16px;inset-inline-end:16px;z-index:100;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--line);border-inline-start:4px solid var(--brand);border-radius:10px;padding:12px 16px;box-shadow:var(--shadow);font-size:.85rem;font-weight:600;min-width:240px;animation:toast-in .25s}
+.toast.danger{border-inline-start-color:var(--danger)}.toast.ok{border-inline-start-color:var(--ok)}.toast.warn{border-inline-start-color:var(--gold)}
+.toast.out{animation:toast-out .25s forwards}
+@keyframes toast-in{from{opacity:0;transform:translateY(-10px)}}
+@keyframes toast-out{to{opacity:0;transform:translateX(10px)}}
+
+.login-screen{position:fixed;inset:0;z-index:200;background:linear-gradient(140deg,var(--brand),var(--brand-deep));display:grid;place-items:center;padding:20px;color:#fff}
+.login-card{background:var(--surface);color:var(--ink);padding:32px;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.5);max-width:420px;width:100%}
+.login-card h2{font-family:var(--font-display);text-align:center;font-size:1.6rem;margin-bottom:6px}
+.login-card p{text-align:center;color:var(--ink-2);margin-bottom:22px;font-size:.88rem}
+.error-msg{background:var(--danger-soft);color:var(--danger);padding:9px 12px;border-radius:8px;font-size:.8rem;font-weight:600;display:none;margin-bottom:10px}
+.error-msg.show{display:block}
+
+.empty{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:.9rem}
+.empty .e-ic{font-size:36px;margin-bottom:8px;display:block}
+
+.bottom-nav{display:none}
+@media(max-width:900px){
+  .sidebar{position:fixed;inset-inline-start:-280px;z-index:70;width:260px;transition:inset-inline-start .25s;box-shadow:0 0 40px rgba(0,0,0,.5)}
+  .sidebar.open{inset-inline-start:0}
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:none}
+  .backdrop.open{display:block}
+  .bottom-nav{position:fixed;bottom:0;inset-inline:0;z-index:50;background:var(--surface);border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px 4px calc(6px + var(--sab))}
+  .bottom-nav::-webkit-scrollbar{display:none}
+  .bnav{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.64rem;font-weight:700;color:var(--ink-3);padding:6px 12px;border-radius:8px;white-space:nowrap;min-height:56px;min-width:64px}
+  .bnav.active{color:var(--brand);background:var(--brand-soft)}
+  .main{padding-bottom:80px}
+}
+
+/* شاشة التحميل */
+.spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:grid;place-items:center;height:100vh}
+
+.badge-count{display:inline-block;background:var(--danger);color:#fff;font-size:.65rem;padding:1px 6px;border-radius:99px;margin-inline-start:4px;font-weight:700}
+
+.scroll-y{max-height:500px;overflow:auto}
+@media(max-width:700px){.scroll-y{max-height:400px}}
+
+.audit-item{padding:8px 12px;border-bottom:1px dashed var(--line);font-size:.82rem;display:flex;gap:8px}
+.audit-item:last-child{border-bottom:none}
+.audit-item .t{color:var(--ink-3);font-size:.7rem;flex:none;min-width:110px}
+.audit-item .a{flex:1}
+
+.view{display:none}.view.active{display:block;animation:rise .25s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+
+.ratings-display{display:flex;gap:3px;direction:ltr;justify-content:center}
+.ratings-display span{color:var(--gold);font-size:1rem}
+.ratings-display span.off{color:var(--ink-3)}
+
+.support-thread{background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:10px}
+.support-msg{padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:.84rem;line-height:1.5}
+.support-msg.user{background:var(--brand-soft);margin-inline-start:20px}
+.support-msg.admin{background:var(--ok-soft);margin-inline-end:20px}
+.support-msg .m{font-size:.68rem;color:var(--ink-3);margin-bottom:2px}
+</style>
+</head>
+<body class="dark">
+
+<!-- شاشة الدخول -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:14px">
+      <div class="brand-logo" style="margin:0 auto 10px;width:56px;height:56px;font-size:1.6rem">M</div>
+      <h2>لوحة المالك</h2>
+      <p>مصاريفي · <span class="ys-badge">YS</span></p>
+    </div>
+    <form id="loginForm" novalidate>
+      <div class="field" style="margin-bottom:10px">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" autocomplete="email" placeholder="admin@example.com">
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div class="error-msg" id="loginError"></div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="margin-top:4px">دخول</button>
+    </form>
+    <p style="text-align:center;margin-top:16px;font-size:.74rem;color:var(--ink-3)">الوصول مقصور على مالك التطبيق فقط</p>
+  </div>
+</div>
+
+<!-- الواجهة -->
+<div class="app" id="appShell" hidden>
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">M</div>
+      <div><h1>مصاريفي</h1><small>لوحة المالك</small></div>
+    </div>
+    <nav id="sideNav">
+      <button class="nav-item active" data-route="dashboard">📊 الرئيسية</button>
+      <button class="nav-item" data-route="users">👥 المستخدمون <span class="count" id="navUsersCount"></span></button>
+      <button class="nav-item" data-route="errors">⚠️ الأخطاء <span class="count" id="navErrorsCount"></span></button>
+      <button class="nav-item" data-route="versions">📦 الإصدارات</button>
+      <button class="nav-item" data-route="maintenance">🔧 الصيانة</button>
+      <button class="nav-item" data-route="features">🎛️ الميزات</button>
+      <button class="nav-item" data-route="messages">📢 الرسائل</button>
+      <button class="nav-item" data-route="support">💬 الدعم <span class="count" id="navSupportCount"></span></button>
+      <button class="nav-item" data-route="ratings">⭐ التقييمات</button>
+      <button class="nav-item" data-route="audit">📜 السجل</button>
+    </nav>
+    <div class="side-foot">
+      <div class="user-bar" id="userBar"><span>👤</span><span id="ownerEmail">—</span></div>
+      <button class="btn btn-ghost btn-sm btn-block" data-action="toggle-theme">🌓 تبديل الوضع</button>
+      <button class="btn btn-ghost btn-sm btn-block" data-action="logout">🚪 خروج</button>
+      <div style="text-align:center;padding-top:4px">© 2025 <span class="ys-badge">YS</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="btn-icon" id="menuBtn" style="display:none" data-action="toggle-menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <h2 id="pageTitle">لوحة التحكم</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" data-action="refresh">🔄 تحديث</button>
+      </div>
+    </header>
+
+    <section class="view active" id="view-dashboard"></section>
+    <section class="view" id="view-users"></section>
+    <section class="view" id="view-errors"></section>
+    <section class="view" id="view-versions"></section>
+    <section class="view" id="view-maintenance"></section>
+    <section class="view" id="view-features"></section>
+    <section class="view" id="view-messages"></section>
+    <section class="view" id="view-support"></section>
+    <section class="view" id="view-ratings"></section>
+    <section class="view" id="view-audit"></section>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bnav active" data-route="dashboard">📊<span>الرئيسية</span></button>
+  <button class="bnav" data-route="users">👥<span>المستخدمون</span></button>
+  <button class="bnav" data-route="errors">⚠️<span>الأخطاء</span></button>
+  <button class="bnav" data-route="versions">📦<span>الإصدارات</span></button>
+  <button class="bnav" data-route="support">💬<span>الدعم</span></button>
+</nav>
+
+<!-- نوافذ -->
+<div class="modal" id="userModal">
+  <div class="modal-card">
+    <div class="modal-h"><h3 id="userModalTitle">تفاصيل المستخدم</h3>
+      <button class="btn-icon" data-action="close-modal">✕</button></div>
+    <div class="modal-b" id="userModalBody"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<div class="modal" id="msgModal">
+  <div class="modal-card">
+    <div class="modal-h"><h3 id="msgModalTitle">رسالة جديدة</h3>
+      <button class="btn-icon" data-action="close-modal">✕</button></div>
+    <form id="msgForm">
+      <div class="modal-b">
+        <div class="field"><label>العنوان *</label><input type="text" id="msgTitle" required></div>
+        <div class="field"><label>النص</label><textarea id="msgBody" rows="3"></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>الهدف</label>
+            <select id="msgTarget">
+              <option value="all">جميع المستخدمين</option>
+              <option value="user">مستخدم محدد</option>
+              <option value="provider">حسب مزود الدخول</option>
+              <option value="version">حسب الإصدار</option>
+            </select></div>
+          <div class="field"><label>النوع</label>
+            <select id="msgType">
+              <option value="info">معلومة</option>
+              <option value="warn">تنبيه</option>
+              <option value="danger">مهم</option>
+            </select></div>
+        </div>
+        <div class="field" id="msgTargetField"><label>القيمة (username / provider / version)</label><input type="text" id="msgTargetValue" placeholder="مثال: google"></div>
+        <div class="form-grid">
+          <div class="field"><label>تاريخ الانتهاء</label><input type="datetime-local" id="msgExpires"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="modal-f">
+        <button type="button" class="btn btn-ghost" data-action="close-modal">إلغاء</button>
+        <button type="submit" class="btn btn-primary">إرسال</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="replyModal">
+  <div class="modal-card" style="width:min(520px,100%)">
+    <div class="modal-h"><h3>الرد على المستخدم</h3>
+      <button class="btn-icon" data-action="close-modal">✕</button></div>
+    <form id="replyForm">
+      <div class="modal-b">
+        <div class="support-thread scroll-y" id="replyThread"></div>
+        <div class="field"><label>ردك</label><textarea id="replyText" rows="3" required placeholder="اكتب ردك..."></textarea></div>
+      </div>
+      <div class="modal-f">
+        <button type="button" class="btn btn-ghost" data-action="close-modal">إلغاء</button>
+        <button type="submit" class="btn btn-primary">إرسال الرد</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="modal-card" style="width:min(420px,100%)">
+    <div class="modal-h"><h3 id="confirmTitle">تأكيد</h3></div>
+    <div class="modal-b"><p id="confirmMsg" style="color:var(--ink-2)"></p></div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" id="confirmCancel">إلغاء</button>
+      <button class="btn btn-danger" id="confirmOk">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+'use strict';
+/* لوحة مالك مصاريفي — تصميم وتطوير: YS */
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCBrrpnOKpfBUbl_Qtv6yNO0ZmQLSHGgVM",
+  authDomain: "masarify-63ec6.firebaseapp.com",
+  projectId: "masarify-63ec6",
+  appId: "1:1050031721216:web:15d68763edf3af4c8b01e5"
+};
+const OWNER_UID = "0SEFr5HUyjcJW7cKhgrEi91OznE3";
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let db, auth, currentUser;
+let state = {
+  users: [], errors: [], messages: [], support: [], ratings: [],
+  audit: [], versions: [], features: {}, config: {},
+};
+let unsub = {};
+const cache = {};
+
+/* ============ Firebase init ============ */
+async function initFirebase(){
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  db.settings({ ignoreUndefinedProperties: true });
+}
+
+function showErr(msg){
+  const el = $('#loginError');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function clearErr(){ $('#loginError').classList.remove('show'); }
+
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  clearErr();
+  const email = $('#loginEmail').value.trim();
+  const pass = $('#loginPass').value;
+  if (!email || !pass) { showErr('أكمل البيانات'); return; }
+  const btn = $('#loginBtn');
+  btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    if (cred.user.uid !== OWNER_UID) {
+      await auth.signOut();
+      showErr('⛔ هذا الحساب ليس المالك الشرعي');
+      btn.disabled = false; btn.textContent = 'دخول';
+      return;
+    }
+    currentUser = cred.user;
+    enterApp();
+  } catch (err) {
+    const msgs = {
+      'auth/user-not-found':'الحساب غير موجود','auth/wrong-password':'كلمة مرور خاطئة',
+      'auth/invalid-credential':'بيانات غير صحيحة','auth/invalid-email':'بريد غير صالح',
+      'auth/too-many-requests':'محاولات كثيرة، حاول لاحقًا','auth/network-request-failed':'لا يوجد إنترنت'
+    };
+    showErr(msgs[err.code] || err.message);
+    btn.disabled = false; btn.textContent = 'دخول';
+  }
+});
+
+auth.onAuthStateChanged(async user => {
+  if (user && user.uid === OWNER_UID) {
+    currentUser = user;
+    enterApp();
+  } else {
+    $('#loginScreen').style.display = '';
+    $('#appShell').hidden = true;
+  }
+});
+
+/* ============ الدخول للتطبيق ============ */
+async function enterApp(){
+  $('#loginScreen').style.display = 'none';
+  $('#appShell').hidden = false;
+  $('#ownerEmail').textContent = currentUser.email;
+  // تحميل الإعدادات
+  state.features = (await db.collection('config').doc('features').get().then(d => d.exists ? d.data() : {})).flags || {};
+  state.config = (await db.collection('config').doc('app').get().then(d => d.exists ? d.data() : {}));
+  state.versions = (await db.collection('config').doc('versions').get().then(d => d.data()?.list || []));
+  startListeners();
+  render();
+  navigate(location.hash.replace('#/','') || 'dashboard');
+}
+
+/* ============ Live Listeners ============ */
+function startListeners(){
+  unsub.users = db.collection('users').onSnapshot(snap => {
+    state.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    $('#navUsersCount').textContent = state.users.length;
+    if ($('.view.active').id === 'view-users' || $('.view.active').id === 'view-dashboard') render();
+  });
+  unsub.errors = db.collection('errors').orderBy('at','desc').limit(500).onSnapshot(snap => {
+    state.errors = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const unresolved = state.errors.filter(e => !e.resolved).length;
+    $('#navErrorsCount').textContent = unresolved || '';
+    if ($('.view.active').id === 'view-errors' || $('.view.active').id === 'view-dashboard') render();
+  });
+  unsub.messages = db.collection('messages').onSnapshot(snap => {
+    state.messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if ($('.view.active').id === 'view-messages') render();
+  });
+  unsub.support = db.collection('support').onSnapshot(snap => {
+    state.support = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const open = state.support.filter(s => {
+      const msgs = s.messages || [];
+      return msgs.length && msgs[msgs.length-1].from === 'user';
+    }).length;
+    $('#navSupportCount').textContent = open || '';
+    if ($('.view.active').id === 'view-support') render();
+  });
+  unsub.ratings = db.collection('ratings').orderBy('at','desc').limit(500).onSnapshot(snap => {
+    state.ratings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if ($('.view.active').id === 'view-ratings') render();
+  });
+  unsub.audit = db.collection('audit').orderBy('at','desc').limit(300).onSnapshot(snap => {
+    state.audit = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if ($('.view.active').id === 'view-audit') render();
+  });
+}
+
+/* ============ التدقيق ============ */
+async function audit(action, details = {}){
+  try {
+    await db.collection('audit').add({
+      action, details, admin: currentUser.email,
+      at: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch {}
+}
+
+/* ============ أدوات ============ */
+function toast(msg, type = 'info'){
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 3500);
+}
+function confirmDialog({ title, message, okText='تأكيد' }){
+  return new Promise(resolve => {
+    $('#confirmTitle').textContent = title;
+    $('#confirmMsg').textContent = message;
+    $('#confirmOk').textContent = okText;
+    openModal('confirmModal');
+    const done = v => { closeModal('confirmModal'); $('#confirmOk').onclick = $('#confirmCancel').onclick = null; resolve(v); };
+    $('#confirmOk').onclick = () => done(true);
+    $('#confirmCancel').onclick = () => done(false);
+  });
+}
+function openModal(id){ $('#'+id).classList.add('open'); }
+function closeModal(id){ $('#'+id).classList.remove('open'); }
+const fmtTime = t => t?.toDate ? t.toDate().toLocaleString('ar') : t ? new Date(t).toLocaleString('ar') : '—';
+const fmtDay = t => t?.toDate ? t.toDate().toLocaleDateString('ar') : t ? new Date(t).toLocaleDateString('ar') : '—';
+const providerName = p => ({
+  'password':'بريد وكلمة مرور','google.com':'Google','facebook.com':'Facebook',
+  'twitter.com':'X','apple.com':'Apple','github.com':'GitHub'
+}[p] || p || '—');
+
+/* ============ التنقل ============ */
+const TITLES = {
+  dashboard:'لوحة التحكم', users:'المستخدمون', errors:'الأخطاء', versions:'الإصدارات',
+  maintenance:'الصيانة', features:'الميزات', messages:'الرسائل', support:'الدعم الفني',
+  ratings:'التقييمات', audit:'سجل التدقيق',
+};
+
+function navigate(route){
+  if (!TITLES[route]) route = 'dashboard';
+  location.hash = '#/' + route;
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $('#view-'+route).classList.add('active');
+  $$('.nav-item,.bnav').forEach(b => b.classList.toggle('active', b.dataset.route === route));
+  $('#pageTitle').textContent = TITLES[route];
+  $('#sidebar').classList.remove('open'); $('#backdrop').classList.remove('open');
+  render();
+}
+
+/* ============ العروض ============ */
+function render(){
+  const route = location.hash.replace('#/','') || 'dashboard';
+  const fns = {
+    dashboard: renderDashboard, users: renderUsers, errors: renderErrors, versions: renderVersions,
+    maintenance: renderMaintenance, features: renderFeatures, messages: renderMessages,
+    support: renderSupport, ratings: renderRatings, audit: renderAudit,
+  };
+  (fns[route] || renderDashboard)();
+}
+
+function renderDashboard(){
+  const el = $('#view-dashboard');
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+  const monthStart = new Date(todayStart); monthStart.setDate(monthStart.getDate() - 30);
+
+  const total = state.users.length;
+  const todayNew = state.users.filter(u => u.createdAt?.toDate && u.createdAt.toDate() >= todayStart).length;
+  const weekNew = state.users.filter(u => u.createdAt?.toDate && u.createdAt.toDate() >= weekStart).length;
+  const monthNew = state.users.filter(u => u.createdAt?.toDate && u.createdAt.toDate() >= monthStart).length;
+
+  const fiveMinAgo = new Date(Date.now() - 5*60*1000);
+  const nowActive = state.users.filter(u => u.lastSeen?.toDate && u.lastSeen.toDate() >= fiveMinAgo).length;
+  const todayActive = state.users.filter(u => u.lastSeen?.toDate && u.lastSeen.toDate() >= todayStart).length;
+
+  const loadTimes = state.users.filter(u => u.loadMs).map(u => u.loadMs);
+  const avgLoad = loadTimes.length ? Math.round(loadTimes.reduce((a,b)=>a+b,0)/loadTimes.length) : 0;
+
+  // توزيع OS/المتصفح/المزود
+  const osCount = {}, browserCount = {}, providerCount = {}, versionCount = {};
+  state.users.forEach(u => {
+    osCount[u.os] = (osCount[u.os]||0)+1;
+    browserCount[u.browser] = (browserCount[u.browser]||0)+1;
+    const p = u.provider || 'password';
+    providerCount[p] = (providerCount[p]||0)+1;
+    if (u.version) versionCount[u.version] = (versionCount[u.version]||0)+1;
+  });
+
+  // رسم بياني للنمو آخر 30 يوم
+  const days = [];
+  for (let i = 29; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
+    const next = new Date(d); next.setDate(next.getDate()+1);
+    const count = state.users.filter(u => u.createdAt?.toDate && u.createdAt.toDate() >= d && u.createdAt.toDate() < next).length;
+    days.push({ d, label: `${d.getDate()}/${d.getMonth()+1}`, count });
+  }
+
+  el.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi"><div class="l">إجمالي المستخدمين</div><div class="v num">${total}</div></div>
+      <div class="kpi ok"><div class="l">جدد اليوم</div><div class="v num">${todayNew}</div><div class="s">${weekNew} هذا الأسبوع · ${monthNew} هذا الشهر</div></div>
+      <div class="kpi info"><div class="l">نشطون الآن</div><div class="v num">${nowActive}</div><div class="s">${todayActive} اليوم</div></div>
+      <div class="kpi warn"><div class="l">متوسط التحميل</div><div class="v num">${avgLoad}<span style="font-size:.6em;color:var(--ink-3)">ms</span></div></div>
+      <div class="kpi danger"><div class="l">أخطاء غير محلولة</div><div class="v num">${state.errors.filter(e=>!e.resolved).length}</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><h3>📈 نمو المستخدمين (آخر 30 يوم)</h3></div>
+        ${buildGrowthChart(days)}
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>🎯 التوزيع</h3></div>
+        ${buildDistribution(osCount, 'الأجهزة')}
+        <div style="margin-top:14px">${buildDistribution(browserCount, 'المتصفحات')}</div>
+        <div style="margin-top:14px">${buildDistribution(providerCount, 'مزودو الدخول')}</div>
+        <div style="margin-top:14px">${buildDistribution(versionCount, 'الإصدارات')}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-h"><h3>🔥 أحدث النشاطات</h3></div>
+      <div class="scroll-y">
+        ${state.users.slice().sort((a,b)=>(b.lastSeen?.toMillis?.()||0)-(a.lastSeen?.toMillis?.()||0)).slice(0,10).map(u=>`
+          <div class="audit-item">
+            <span class="t">${fmtTime(u.lastSeen)}</span>
+            <span class="a"><b>${esc(u.username||u.email||'—')}</b> · ${esc(u.os||'—')} · ${esc(u.browser||'—')} · <span class="tag info">${esc(u.version||'—')}</span></span>
+          </div>
+        `).join('') || '<div class="empty">لا توجد نشاطات</div>'}
+      </div>
+    </div>`;
+}
+
+function buildGrowthChart(days){
+  const max = Math.max(...days.map(d=>d.count), 1);
+  const W = 600, H = 200, P = 30;
+  const points = days.map((d,i) => {
+    const x = P + i*(W-2*P)/29;
+    const y = H - P - (d.count/max)*(H-2*P);
+    return { x, y, d };
+  });
+  const pathD = points.map((p,i) => (i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+  const areaD = pathD + ` L ${points[points.length-1].x},${H-P} L ${points[0].x},${H-P} Z`;
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="plotGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d5c45" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#0d5c45" stop-opacity="0"/>
+    </linearGradient></defs>
+    <line class="grid-line" x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}"/>
+    <line class="grid-line" x1="${P}" y1="${P}" x2="${P}" y2="${H-P}"/>
+    <path class="plot-area" d="${areaD}"/>
+    <path class="plot-line" d="${pathD}"/>
+    ${points.map(p=>`<circle class="plot-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3"><title>${esc(p.d.label)}: ${p.d.count} جديد</title></circle>`).join('')}
+    ${[0,7,14,21,29].map(i=>`<text class="axis-label" x="${P+i*(W-2*P)/29}" y="${H-10}" text-anchor="middle">${esc(days[i].label)}</text>`).join('')}
+    <text class="axis-label" x="${P-8}" y="${P+4}" text-anchor="end">${max}</text>
+    <text class="axis-label" x="${P-8}" y="${H-P+4}" text-anchor="end">0</text>
+  </svg>`;
+}
+
+function buildDistribution(obj, title){
+  const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max = entries[0]?.[1] || 1;
+  return `<div style="font-size:.78rem;font-weight:700;color:var(--ink-2);margin-bottom:6px">${esc(title)}</div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+      ${entries.map(([k,v])=>`<div style="display:flex;align-items:center;gap:8px">
+        <span style="flex:none;min-width:70px;font-size:.76rem;color:var(--ink-2)">${esc(k)}</span>
+        <div style="flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${v/max*100}%;background:var(--brand);border-radius:3px"></div>
+        </div>
+        <span class="num" style="flex:none;min-width:32px;font-size:.78rem;font-weight:700;text-align:end">${v}</span>
+      </div>`).join('') || '<div class="empty">لا توجد بيانات</div>'}
+    </div>`;
+}
+
+function renderUsers(){
+  const el = $('#view-users');
+  const f = cache.usersFilter || {};
+  const filtered = state.users.filter(u => {
+    if (f.q && !String(u.username||u.email||'').toLowerCase().includes(f.q.toLowerCase())) return false;
+    if (f.provider && u.provider !== f.provider) return false;
+    if (f.version && u.version !== f.version) return false;
+    return true;
+  });
+  const providers = [...new Set(state.users.map(u=>u.provider).filter(Boolean))];
+  const versions = [...new Set(state.users.map(u=>u.version).filter(Boolean))];
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="filter-bar">
+        <input type="search" id="uSearch" placeholder="🔍 بحث..." value="${esc(f.q||'')}">
+        <select id="uProvider"><option value="">كل المزودين</option>${providers.map(p=>`<option value="${p}" ${f.provider===p?'selected':''}>${providerName(p)}</option>`).join('')}</select>
+        <select id="uVersion"><option value="">كل الإصدارات</option>${versions.map(v=>`<option value="${v}" ${f.version===v?'selected':''}>${v}</option>`).join('')}</select>
+        <button class="btn btn-ghost btn-sm" data-action="export-users-json">📤 JSON</button>
+        <button class="btn btn-ghost btn-sm" data-action="export-users-csv">📊 CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr>
+            <th>المستخدم</th><th>الاسم</th><th>المزود</th><th>الجهاز</th><th>الإصدار</th>
+            <th>آخر نشاط</th><th>الحالة</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${filtered.slice().sort((a,b)=>(b.lastSeen?.toMillis?.()||0)-(a.lastSeen?.toMillis?.()||0)).map(u=>`
+              <tr>
+                <td><b>${esc(u.username||'—')}</b><br><small style="color:var(--ink-3)">${esc(u.email||'')}</small></td>
+                <td>${esc(u.name||'—')}</td>
+                <td><span class="tag info">${providerName(u.provider)}</span></td>
+                <td>${esc(u.os||'—')} · ${esc(u.browser||'—')} ${u.mobile?'📱':'💻'}</td>
+                <td>${esc(u.version||'—')}</td>
+                <td>${fmtTime(u.lastSeen)}</td>
+                <td>${u.blocked?'<span class="tag danger">محظور</span>':'<span class="tag ok">نشط</span>'}</td>
+                <td style="text-align:end"><button class="btn btn-ghost btn-sm" data-action="view-user" data-id="${u.id}">تفاصيل</button></td>
+              </tr>
+            `).join('') || `<tr><td colspan="8" class="empty">لا يوجد مستخدمون</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;color:var(--ink-3);font-size:.8rem">الإجمالي: <b class="num">${filtered.length}</b> من ${state.users.length}</div>
+    </div>`;
+
+  $('#uSearch').addEventListener('input', e => { cache.usersFilter = { ...cache.usersFilter, q: e.target.value }; renderUsers(); });
+  $('#uProvider').addEventListener('change', e => { cache.usersFilter = { ...cache.usersFilter, provider: e.target.value }; renderUsers(); });
+  $('#uVersion').addEventListener('change', e => { cache.usersFilter = { ...cache.usersFilter, version: e.target.value }; renderUsers(); });
+}
+
+async function viewUser(id){
+  openModal('userModal');
+  const u = state.users.find(x => x.id === id);
+  if (!u) { closeModal('userModal'); return; }
+  $('#userModalTitle').textContent = `تفاصيل: ${u.username || u.email}`;
+  $('#userModalBody').innerHTML = '<div class="spinner"></div>';
+
+  // جلب سجل الدخول
+  let logins = [];
+  try {
+    const snap = await db.collection('users').doc(id).collection('logins').orderBy('at','desc').limit(20).get();
+    logins = snap.docs.map(d => d.data());
+  } catch {}
+
+  $('#userModalBody').innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+      <div class="kpi"><div class="l">المزود</div><div style="font-weight:700">${providerName(u.provider)}</div></div>
+      <div class="kpi info"><div class="l">الجهاز</div><div style="font-weight:700">${esc(u.os||'—')}</div></div>
+      <div class="kpi warn"><div class="l">المتصفح</div><div style="font-weight:700">${esc(u.browser||'—')}</div></div>
+      <div class="kpi"><div class="l">الإصدار</div><div style="font-weight:700">${esc(u.version||'—')}</div></div>
+      <div class="kpi ok"><div class="l">التسجيل</div><div style="font-size:.85rem">${fmtDay(u.createdAt)}</div></div>
+      <div class="kpi info"><div class="l">آخر نشاط</div><div style="font-size:.85rem">${fmtTime(u.lastSeen)}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="field"><label>رسالة خاصة للمستخدم</label>
+        <textarea id="userPrivateMsg" rows="2" placeholder="اكتب رسالة..."></textarea></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" data-action="send-private-msg" data-id="${id}">📨 إرسال</button>
+        ${u.blocked
+          ? `<button class="btn btn-ok btn-sm" data-action="unblock-user" data-id="${id}">🔓 إلغاء الحظر</button>`
+          : `<button class="btn btn-danger btn-sm" data-action="block-user" data-id="${id}">🚫 حظر</button>`}
+        <button class="btn btn-danger btn-sm" data-action="delete-user" data-id="${id}">🗑️ حذف</button>
+      </div>
+    </div>
+    <div style="margin-top:14px"><h4 style="font-size:.9rem;margin-bottom:8px">سجل الدخول (آخر 20)</h4>
+      <div class="scroll-y" style="max-height:240px;background:var(--surface-2);border-radius:8px">
+        ${logins.length ? logins.map(l=>`<div class="audit-item"><span class="t">${fmtTime(l.at)}</span><span class="a">${esc(l.os||'—')} · ${esc(l.browser||'—')} · <span class="tag">${esc(l.version||'—')}</span></span></div>`).join('') : '<div class="empty">لا سجلات</div>'}
+      </div>
+    </div>`;
+}
+
+async function blockUser(id){
+  const u = state.users.find(x=>x.id===id);
+  const reason = prompt('سبب الحظر (اختياري):');
+  if (reason === null) return;
+  await db.collection('users').doc(id).update({ blocked: true, blockedReason: reason || 'محظور من المالك' });
+  await audit('block_user', { userId: id, username: u.username, reason });
+  toast('تم حظر المستخدم', 'ok');
+}
+async function unblockUser(id){
+  await db.collection('users').doc(id).update({ blocked: false, blockedReason: null });
+  await audit('unblock_user', { userId: id });
+  toast('تم إلغاء الحظر', 'ok');
+}
+async function deleteUser(id){
+  const u = state.users.find(x=>x.id===id);
+  if (!await confirmDialog({ title:'حذف المستخدم', message:`سيتم حذف ${u.username||u.email} وكل بياناته نهائيًا. متابعة؟`, okText:'حذف' })) return;
+  // حذف بيانات المستخدم
+  try {
+    const dataRef = db.collection('users').doc(id).collection('data');
+    const snap = await dataRef.get();
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    batch.delete(db.collection('users').doc(id));
+    await batch.commit();
+  } catch {}
+  try { await auth.deleteUser?.(id); } catch {}
+  await audit('delete_user', { userId: id, username: u.username });
+  toast('تم الحذف', 'ok');
+  closeModal('userModal');
+}
+async function sendPrivateMsg(id){
+  const text = $('#userPrivateMsg').value.trim();
+  if (!text) { toast('اكتب رسالتك', 'warn'); return; }
+  await db.collection('support').doc(id).set({
+    uid: id, replies: firebase.firestore.FieldValue.arrayUnion({
+      id: Date.now().toString(), from:'admin', text, at: Date.now()
+    }), updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  const u = state.users.find(x=>x.id===id);
+  await audit('private_message', { userId: id, username: u.username });
+  $('#userPrivateMsg').value = '';
+  toast('تم إرسال الرسالة', 'ok');
+}
+
+function exportUsers(format){
+  const users = state.users;
+  if (!users.length) { toast('لا يوجد مستخدمون', 'warn'); return; }
+  if (format === 'csv'){
+    const headers = ['username','name','email','provider','os','browser','version','mobile','lang','createdAt','lastLogin','lastSeen','blocked'];
+    const rows = users.map(u => headers.map(h => {
+      let v = u[h];
+      if (v?.toDate) v = v.toDate().toISOString();
+      return `"${String(v??'').replace(/"/g,'""')}"`;
+    }).join(','));
+    const csv = '\ufeff' + [headers.join(','), ...rows].join('\n');
+    download(csv, `users-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv');
+  } else {
+    download(JSON.stringify(users, null, 2), `users-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+  }
+  audit('export_users', { format, count: users.length });
+  toast('تم التصدير', 'ok');
+}
+function download(content, name, type){
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function renderErrors(){
+  const el = $('#view-errors');
+  const f = cache.errFilter || {};
+  const unresolved = state.errors.filter(e => !e.resolved);
+  const grouped = {};
+  unresolved.forEach(e => {
+    const key = (e.message || '').slice(0,100);
+    if (!grouped[key]) grouped[key] = { msg: e.message, stack: e.stack, items: [], context: e.context };
+    grouped[key].items.push(e);
+  });
+  const groups = Object.values(grouped).sort((a,b)=>b.items.length-a.items.length);
+  const filteredGroups = groups.filter(g => {
+    if (f.q && !g.msg.toLowerCase().includes(f.q.toLowerCase())) return false;
+    if (f.version && !g.items.some(i => i.version === f.version)) return false;
+    return true;
+  });
+  const versions = [...new Set(state.errors.map(e=>e.version).filter(Boolean))];
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="filter-bar">
+        <input type="search" id="eSearch" placeholder="🔍 بحث..." value="${esc(f.q||'')}">
+        <select id="eVersion"><option value="">كل الإصدارات</option>${versions.map(v=>`<option value="${v}" ${f.version===v?'selected':''}>${v}</option>`).join('')}</select>
+        <span style="color:var(--ink-3);font-size:.85rem">الأخطاء غير المحلولة: <b class="num">${unresolved.length}</b></span>
+      </div>
+      <div class="scroll-y">
+        ${filteredGroups.length ? filteredGroups.map((g,i)=>`
+          <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="tag danger">×${g.items.length}</span>
+                  <span style="font-size:.74rem;color:var(--ink-3)">${esc(g.context||'')}</span>
+                </div>
+                <div style="font-weight:700;font-size:.88rem">${esc(g.msg)}</div>
+                ${g.stack ? `<details style="margin-top:4px"><summary style="font-size:.72rem;color:var(--ink-3);cursor:pointer">عرض Stack</summary>
+                  <pre style="margin-top:4px;font-size:.7rem;background:var(--bg);padding:6px;border-radius:6px;overflow:auto;max-height:140px">${esc(g.stack)}</pre></details>` : ''}
+              </div>
+              <button class="btn btn-ok btn-sm" data-action="resolve-error" data-hash="${encodeURIComponent(g.msg.slice(0,100))}">✓ تم الحل</button>
+            </div>
+            <div style="margin-top:6px;font-size:.72rem;color:var(--ink-3)">
+              أول ظهور: ${fmtTime(g.items[g.items.length-1].at)} · آخر ظهور: ${fmtTime(g.items[0].at)}
+            </div>
+          </div>
+        `).join('') : '<div class="empty"><span class="e-ic">🎉</span>لا توجد أخطاء غير محلولة</div>'}
+      </div>
+    </div>`;
+
+  $('#eSearch').addEventListener('input', e => { cache.errFilter = { ...cache.errFilter, q: e.target.value }; renderErrors(); });
+  $('#eVersion').addEventListener('change', e => { cache.errFilter = { ...cache.errFilter, version: e.target.value }; renderErrors(); });
+}
+async function resolveError(hash){
+  const msg = decodeURIComponent(hash);
+  const targets = state.errors.filter(e => !e.resolved && (e.message||'').slice(0,100) === msg);
+  const batch = db.batch();
+  targets.forEach(e => batch.update(db.collection('errors').doc(e.id), { resolved: true }));
+  await batch.commit();
+  await audit('resolve_error', { count: targets.length, msg: msg.slice(0,80) });
+  toast(`تم حل ${targets.length} خطأ`, 'ok');
+}
+
+function renderVersions(){
+  const el = $('#view-versions');
+  const cfg = state.config;
+  el.innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><h3>📦 الإصدار الحالي</h3></div>
+        <div class="field" style="margin-bottom:10px"><label>أحدث إصدار متاح</label>
+          <input type="text" id="vLatest" value="${esc(cfg.latestVersion||'')}" placeholder="2.2.0"></div>
+        <div class="field" style="margin-bottom:10px"><label>أدنى إصدار مسموح (إجباري)</label>
+          <input type="text" id="vMin" value="${esc(cfg.minVersion||'')}" placeholder="2.0.0"></div>
+        <div class="field" style="margin-bottom:10px"><label>رسالة التحديث الإجباري</label>
+          <input type="text" id="vUpdateMsg" value="${esc(cfg.updateMessage||'')}" placeholder="يرجى التحديث"></div>
+        <div class="field" style="margin-bottom:10px"><label>تحديث اختياري (الإصدار)</label>
+          <input type="text" id="vOptVersion" value="${esc(cfg.optionalUpdate?.version||'')}"></div>
+        <div class="field" style="margin-bottom:10px"><label>ملاحظات التحديث الاختياري</label>
+          <textarea id="vOptNotes" rows="2">${esc(cfg.optionalUpdate?.notes||'')}</textarea></div>
+        <button class="btn btn-primary" data-action="save-versions">💾 حفظ</button>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>📜 سجل الإصدارات السابقة</h3>
+          <button class="btn btn-ghost btn-sm" data-action="add-version">+ إضافة</button></div>
+        <div class="scroll-y" style="max-height:500px">
+          ${state.versions.length ? state.versions.map((v,i)=>`
+            <div style="padding:10px;border-bottom:1px dashed var(--line)">
+              <div style="display:flex;justify-content:space-between;gap:6px">
+                <b>${esc(v.version)}</b>
+                <span style="font-size:.72rem;color:var(--ink-3)">${fmtDay(v.releasedAt||Date.now())}</span>
+              </div>
+              <div style="font-size:.82rem;color:var(--ink-2);margin-top:4px;white-space:pre-wrap">${esc(v.notes||'')}</div>
+              <button class="btn btn-ghost btn-sm" data-action="delete-version" data-i="${i}" style="margin-top:6px">حذف</button>
+            </div>
+          `).join('') : '<div class="empty">لا توجد إصدارات</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+async function saveVersions(){
+  const data = {
+    latestVersion: $('#vLatest').value.trim(),
+    minVersion: $('#vMin').value.trim(),
+    updateMessage: $('#vUpdateMsg').value.trim(),
+    optionalUpdate: {
+      version: $('#vOptVersion').value.trim(),
+      notes: $('#vOptNotes').value.trim(),
+    },
+  };
+  await db.collection('config').doc('app').set(data, { merge: true });
+  Object.assign(state.config, data);
+  await audit('update_versions', data);
+  toast('تم الحفظ', 'ok');
+}
+async function addVersion(){
+  const version = prompt('رقم الإصدار (مثال 2.2.0):');
+  if (!version) return;
+  const notes = prompt('ملاحظات الإصدار:') || '';
+  state.versions.unshift({ version, notes, releasedAt: Date.now() });
+  await db.collection('config').doc('versions').set({ list: state.versions }, { merge: true });
+  await audit('add_version', { version });
+  toast('تمت الإضافة', 'ok'); renderVersions();
+}
+async function deleteVersion(i){
+  if (!await confirmDialog({ title:'حذف', message:'حذف هذا الإصدار من السجل؟', okText:'حذف' })) return;
+  state.versions.splice(i,1);
+  await db.collection('config').doc('versions').set({ list: state.versions });
+  await audit('delete_version', { });
+  renderVersions();
+}
+
+function renderMaintenance(){
+  const cfg = state.config;
+  const on = cfg.maintenance === true;
+  const el = $('#view-maintenance');
+  el.innerHTML = `
+    <div class="card" style="max-width:680px">
+      <div class="card-h"><h3>🔧 وضع الصيانة</h3></div>
+      <p style="color:var(--ink-2);margin-bottom:14px">عند التفعيل، تظهر شاشة مانعة لكل المستخدمين (عدا المالك).</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <label class="toggle"><input type="checkbox" id="mntOn" ${on?'checked':''}><span class="toggle-slider"></span></label>
+        <span style="font-weight:700">${on?'مفعّل':'معطّل'}</span>
+      </div>
+      <div class="field"><label>رسالة الصيانة</label>
+        <textarea id="mntMsg" rows="3" placeholder="نعمل على تحسينات...">${esc(cfg.maintenanceMessage||'')}</textarea></div>
+      <button class="btn btn-primary" data-action="save-maintenance" style="margin-top:10px">💾 حفظ</button>
+    </div>`;
+}
+async function saveMaintenance(){
+  const on = $('#mntOn').checked;
+  const msg = $('#mntMsg').value.trim();
+  await db.collection('config').doc('app').set({
+    maintenance: on, maintenanceMessage: msg,
+  }, { merge: true });
+  Object.assign(state.config, { maintenance: on, maintenanceMessage: msg });
+  await audit('update_maintenance', { on, msg });
+  toast('تم الحفظ', 'ok');
+  renderMaintenance();
+}
+
+function renderFeatures(){
+  const f = state.features || {};
+  const flags = [
+    { key:'recurring', label:'المصاريف المتكررة', desc:'توليد العمليات الشهرية تلقائيًا' },
+    { key:'reports', label:'التقارير والرسوم', desc:'عرض صفحة التقارير' },
+    { key:'attachments', label:'إرفاق صور الفواتير', desc:'السماح برفع الصور' },
+    { key:'socialAuth', label:'الدخول الاجتماعي', desc:'Google / Facebook / X' },
+    { key:'export', label:'التصدير والاستيراد', desc:'ملفات JSON' },
+    { key:'sync', label:'المزامنة السحابية', desc:'حفظ البيانات في Firestore' },
+  ];
+  const el = $('#view-features');
+  el.innerHTML = `
+    <div class="card" style="max-width:680px">
+      <div class="card-h"><h3>🎛️ مفاتيح الميزات</h3></div>
+      <p style="color:var(--ink-2);margin-bottom:14px">فعّل أو عطّل الميزات لكل المستخدمين فورًا.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${flags.map(flag => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface-2);border-radius:10px">
+            <label class="toggle"><input type="checkbox" data-flag="${flag.key}" ${f[flag.key]!==false?'checked':''}><span class="toggle-slider"></span></label>
+            <div style="flex:1">
+              <div style="font-weight:700">${esc(flag.label)}</div>
+              <div style="font-size:.78rem;color:var(--ink-3)">${esc(flag.desc)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-primary" data-action="save-features" style="margin-top:14px">💾 حفظ</button>
+    </div>`;
+}
+async function saveFeatures(){
+  const flags = {};
+  $$('[data-flag]').forEach(el => flags[el.dataset.flag] = el.checked);
+  await db.collection('config').doc('features').set({ flags });
+  state.features = flags;
+  await audit('update_features', { flags });
+  toast('تم الحفظ', 'ok');
+}
+
+function renderMessages(){
+  const el = $('#view-messages');
+  const msgs = state.messages.slice().sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-h"><h3>📢 الرسائل</h3>
+        <button class="btn btn-primary btn-sm" data-action="new-message">+ رسالة جديدة</button></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>العنوان</th><th>الهدف</th><th>النوع</th><th>ينتهي</th><th>شوهدت</th><th></th></tr></thead>
+          <tbody>
+            ${msgs.map(m=>{
+              const expired = m.expiresAt?.toDate && m.expiresAt.toDate() < new Date();
+              return `<tr style="${expired?'opacity:.5':''}">
+                <td><b>${esc(m.title||'—')}</b><br><small>${esc(m.body||'')}</small></td>
+                <td><span class="tag info">${esc(m.target||'all')}</span> ${m.targetValue?'<br><small>'+esc(m.targetValue)+'</small>':''}</td>
+                <td><span class="tag ${m.type==='danger'?'danger':m.type==='warn'?'warn':'info'}">${esc(m.type||'info')}</span></td>
+                <td>${fmtDay(m.expiresAt)}</td>
+                <td><span class="num">${m.seenCount||0}</span></td>
+                <td style="text-align:end"><button class="btn btn-danger btn-sm" data-action="delete-message" data-id="${m.id}">حذف</button></td>
+              </tr>`;
+            }).join('') || `<tr><td colspan="6" class="empty">لا توجد رسائل</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+function newMessage(){
+  openModal('msgModal');
+  $('#msgForm').reset();
+  const tomorrow = new Date(Date.now()+24*60*60*1000);
+  $('#msgExpires').value = tomorrow.toISOString().slice(0,16);
+}
+$('#msgTarget').addEventListener('change', e => {
+  $('#msgTargetField').style.display = e.target.value === 'all' ? 'none' : '';
+});
+$('#msgForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = $('#msgTitle').value.trim();
+  if (!title) return;
+  const target = $('#msgTarget').value;
+  const targetValue = $('#msgTargetValue').value.trim();
+  const expires = $('#msgExpires').value ? new Date($('#msgExpires').value) : null;
+  await db.collection('messages').add({
+    title, body: $('#msgBody').value.trim(),
+    target, targetValue: targetValue || null,
+    type: $('#msgType').value,
+    expiresAt: expires ? firebase.firestore.Timestamp.fromDate(expires) : null,
+    seenCount: 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  await audit('send_message', { title, target });
+  closeModal('msgModal');
+  toast('تم إرسال الرسالة', 'ok');
+});
+async function deleteMessage(id){
+  if (!await confirmDialog({ title:'حذف', message:'حذف هذه الرسالة؟', okText:'حذف' })) return;
+  await db.collection('messages').doc(id).delete();
+  await audit('delete_message', { id });
+  toast('تم الحذف', 'ok');
+}
+
+function renderSupport(){
+  const el = $('#view-support');
+  const sorted = state.support.slice().sort((a,b)=>(b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0));
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-h"><h3>💬 صندوق الدعم</h3>
+        <span style="font-size:.85rem;color:var(--ink-2)">الكل: <b class="num">${sorted.length}</b></span></div>
+      <div class="scroll-y">
+        ${sorted.length ? sorted.map(s=>{
+          const msgs = s.messages || [];
+          const lastMsg = msgs[msgs.length-1];
+          const waiting = lastMsg?.from === 'user';
+          return `<div class="support-thread">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+              <div><b>${esc(s.username||s.uid||'—')}</b> <span style="color:var(--ink-3);font-size:.78rem">${esc(s.email||'')}</span></div>
+              <div style="display:flex;gap:4px">
+                ${waiting?'<span class="tag warn">بانتظار الرد</span>':'<span class="tag ok">تم الرد</span>'}
+                <span class="tag">${msgs.length} رسالة</span>
+              </div>
+            </div>
+            <div style="font-size:.8rem;color:var(--ink-2);max-height:80px;overflow:auto">
+              ${msgs.slice(-2).map(m=>`<div class="support-msg ${m.from}"><div class="m">${m.from==='user'?'المستخدم':'أنت'} · ${new Date(m.at).toLocaleString('ar')}</div>${esc(m.text)}</div>`).join('')}
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="reply-support" data-id="${s.id}" style="margin-top:8px">💬 فتح والرد</button>
+          </div>`;
+        }).join('') : '<div class="empty"><span class="e-ic">📭</span>لا توجد رسائل دعم</div>'}
+      </div>
+    </div>`;
+}
+function replySupport(id){
+  const s = state.support.find(x=>x.id===id);
+  if (!s) return;
+  cache.replyId = id;
+  $('#replyThread').innerHTML = (s.messages||[]).map(m=>`<div class="support-msg ${m.from}"><div class="m">${m.from==='user'?'المستخدم':'أنت'} · ${new Date(m.at).toLocaleString('ar')}</div>${esc(m.text)}</div>`).join('');
+  $('#replyText').value = '';
+  openModal('replyModal');
+}
+$('#replyForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = $('#replyText').value.trim();
+  if (!text) return;
+  await db.collection('support').doc(cache.replyId).set({
+    replies: firebase.firestore.FieldValue.arrayUnion({
+      id: Date.now().toString(), from:'admin', text, at: Date.now(),
+    }),
+    messages: firebase.firestore.FieldValue.arrayUnion({
+      id: Date.now().toString(), from:'admin', text, at: Date.now(),
+    }),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  await audit('reply_support', { id: cache.replyId });
+  closeModal('replyModal');
+  toast('تم إرسال الرد', 'ok');
+});
+
+function renderRatings(){
+  const el = $('#view-ratings');
+  const ratings = state.ratings;
+  const avg = ratings.length ? (ratings.reduce((s,r)=>s+r.stars,0)/ratings.length).toFixed(2) : '0.00';
+  const dist = [1,2,3,4,5].map(n => ratings.filter(r=>r.stars===n).length);
+  const total = ratings.length || 1;
+  el.innerHTML = `
+    <div class="grid-2">
+      <div class="card" style="text-align:center">
+        <div class="card-h"><h3>⭐ متوسط التقييم</h3></div>
+        <div class="num" style="font-size:3.5rem;font-weight:800;color:var(--gold)">${avg}</div>
+        <div class="ratings-display" style="font-size:1.6rem;margin:8px 0">${'★'.repeat(Math.round(+avg)).split('').map(s=>`<span>${s}</span>`).join('')}${'★'.repeat(5-Math.round(+avg)).split('').map(s=>`<span class="off">${s}</span>`).join('')}</div>
+        <div style="color:var(--ink-2);font-size:.88rem">${ratings.length} تقييم</div>
+        <div style="margin-top:16px">
+          ${[5,4,3,2,1].map(n=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="flex:none;min-width:20px;text-align:end">${n}★</span>
+              <div style="flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${dist[n-1]/total*100}%;background:var(--gold);border-radius:4px"></div>
+              </div>
+              <span class="num" style="flex:none;min-width:32px;font-size:.78rem;color:var(--ink-2)">${dist[n-1]}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>📝 آخر التقييمات</h3></div>
+        <div class="scroll-y">
+          ${ratings.length ? ratings.slice(0,30).map(r=>`
+            <div style="padding:10px;border-bottom:1px dashed var(--line)">
+              <div style="display:flex;justify-content:space-between;gap:6px">
+                <div class="ratings-display">${'★'.repeat(r.stars).split('').map(s=>`<span>${s}</span>`).join('')}${'★'.repeat(5-r.stars).split('').map(s=>`<span class="off">${s}</span>`).join('')}</div>
+                <span style="font-size:.7rem;color:var(--ink-3)">${fmtTime(r.at)}</span>
+              </div>
+              <div style="font-size:.82rem;color:var(--ink-2);margin-top:4px">${esc(r.comment||'(بدون تعليق)')}</div>
+              <div style="font-size:.7rem;color:var(--ink-3);margin-top:2px">${esc(r.uid||'').slice(0,12)}... · v${esc(r.version||'—')}</div>
+            </div>
+          `).join('') : '<div class="empty">لا توجد تقييمات بعد</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAudit(){
+  const el = $('#view-audit');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-h"><h3>📜 سجل التدقيق</h3>
+        <button class="btn btn-ghost btn-sm" data-action="clear-audit">🗑️ مسح السجل</button></div>
+      <div class="scroll-y">
+        ${state.audit.length ? state.audit.map(a=>`
+          <div class="audit-item">
+            <span class="t">${fmtTime(a.at)}</span>
+            <span class="a">
+              <b>${esc(a.action)}</b>
+              ${a.details?` · <code style="font-size:.72rem;background:var(--surface-2);padding:1px 5px;border-radius:4px">${esc(JSON.stringify(a.details).slice(0,120))}</code>`:''}
+              <span style="color:var(--ink-3);font-size:.72rem"> · ${esc(a.admin||'')}</span>
+            </span>
+          </div>
+        `).join('') : '<div class="empty">لا توجد أحداث</div>'}
+      </div>
+    </div>`;
+}
+async function clearAudit(){
+  if (!await confirmDialog({ title:'مسح السجل', message:'سيتم حذف جميع أحداث التدقيق. متابعة؟', okText:'مسح' })) return;
+  const snap = await db.collection('audit').get();
+  const batch = db.batch();
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  toast('تم المسح', 'ok');
+}
+
+/* ============ الأحداث ============ */
+const actions = {
+  'toggle-theme': () => { document.body.classList.toggle('light'); document.body.classList.toggle('dark'); },
+  'toggle-menu': () => { $('#sidebar').classList.toggle('open'); $('#backdrop').classList.toggle('open'); $('#menuBtn').style.display = ''; },
+  'refresh': () => render(),
+  'logout': async () => {
+    if (!await confirmDialog({ title:'خروج', message:'تسجيل الخروج من لوحة المالك؟', okText:'خروج', danger:false })) return;
+    await auth.signOut();
+    location.reload();
+  },
+  'view-user': d => viewUser(d.id),
+  'block-user': d => blockUser(d.id),
+  'unblock-user': d => unblockUser(d.id),
+  'delete-user': d => deleteUser(d.id),
+  'send-private-msg': d => sendPrivateMsg(d.id),
+  'export-users-json': () => exportUsers('json'),
+  'export-users-csv': () => exportUsers('csv'),
+  'resolve-error': d => resolveError(d.hash),
+  'save-versions': saveVersions,
+  'add-version': addVersion,
+  'delete-version': d => deleteVersion(+d.i),
+  'save-maintenance': saveMaintenance,
+  'save-features': saveFeatures,
+  'new-message': newMessage,
+  'delete-message': d => deleteMessage(d.id),
+  'reply-support': d => replySupport(d.id),
+  'clear-audit': clearAudit,
+  'close-modal': e => { const m = e.target ? e.target.closest('.modal') : null; if (m) m.classList.remove('open'); else $$('.modal.open').forEach(x=>x.classList.remove('open')); },
+};
+
+document.addEventListener('click', e => {
+  const nav = e.target.closest('[data-route]');
+  if (nav) { navigate(nav.dataset.route); return; }
+  const btn = e.target.closest('[data-action]');
+  if (btn && actions[btn.dataset.action]) actions[btn.dataset.action](btn.dataset, e);
+  if (e.target.classList?.contains('modal')) e.target.classList.remove('open');
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('.modal.open').forEach(m=>m.classList.remove('open')); });
+
+// Mobile menu
+function checkMobile(){
+  const mobile = window.innerWidth <= 900;
+  $('#menuBtn').style.display = mobile ? 'grid' : 'none';
+  if (!mobile) { $('#sidebar').classList.remove('open'); $('#backdrop').classList.remove('open'); }
+}
+window.addEventListener('resize', checkMobile);
+$('#backdrop').addEventListener('click', () => { $('#sidebar').classList.remove('open'); $('#backdrop').classList.remove('open'); });
+
+/* ============ الإقلاع ============ */
+(async () => {
+  await initFirebase();
+  checkMobile();
+})();
+</script>
+</body>
+</html>
